@@ -8,8 +8,8 @@ pub struct LAContext {
     inner: _sys::LAContext,
 }
 
-impl LAContext {
-    pub fn new() -> Self {
+impl Default for LAContext {
+    fn default() -> Self {
         let ptr = unsafe { _sys::LAContext::alloc().init() };
         LAContext {
             inner: _sys::LAContext(ptr),
@@ -26,7 +26,7 @@ impl LAContext {
         if error.0.is_null() {
             Ok(available)
         } else {
-            Err(LAError::from(error))
+            Err(error.into())
         }
     }
 
@@ -59,7 +59,7 @@ impl LAContext {
             if error.0.is_null() {
                 reply(Ok(success));
             } else {
-                reply(Err(LAError::from(error)));
+                reply(Err(error.into()));
             }
         })
         .copy();

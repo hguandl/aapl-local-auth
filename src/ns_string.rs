@@ -1,4 +1,4 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 
 use _sys::NSString_NSStringExtensionMethods;
 
@@ -25,18 +25,17 @@ impl From<_sys::NSString> for NSString {
     }
 }
 
-impl Into<String> for NSString {
-    fn into(self) -> String {
-        unsafe {
-            let ptr = self.inner.UTF8String();
-            std::ffi::CStr::from_ptr(ptr).to_str().unwrap()
-        }
-        .to_string()
+impl From<NSString> for _sys::NSString {
+    fn from(s: NSString) -> Self {
+        s.inner
     }
 }
 
-impl Into<_sys::NSString> for NSString {
-    fn into(self) -> _sys::NSString {
-        self.inner
+impl From<NSString> for String {
+    fn from(s: NSString) -> Self {
+        unsafe {
+            let cstr = s.inner.UTF8String();
+            CStr::from_ptr(cstr).to_str().unwrap().to_string()
+        }
     }
 }

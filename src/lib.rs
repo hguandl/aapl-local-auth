@@ -1,5 +1,6 @@
 mod la_context;
 mod la_error;
+mod ns_error;
 mod ns_string;
 
 pub use la_context::LAContext;

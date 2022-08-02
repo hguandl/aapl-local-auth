@@ -1,30 +1,76 @@
-use std::fmt::Display;
+#![allow(non_upper_case_globals)]
 
-use _sys::{INSError, NSError};
+use _sys::{
+    LAError_LAErrorAppCancel, LAError_LAErrorAuthenticationFailed,
+    LAError_LAErrorBiometryDisconnected, LAError_LAErrorBiometryLockout,
+    LAError_LAErrorBiometryNotAvailable, LAError_LAErrorBiometryNotEnrolled,
+    LAError_LAErrorBiometryNotPaired, LAError_LAErrorInvalidContext,
+    LAError_LAErrorInvalidDimensions, LAError_LAErrorNotInteractive, LAError_LAErrorPasscodeNotSet,
+    LAError_LAErrorSystemCancel, LAError_LAErrorUserCancel, LAError_LAErrorUserFallback,
+    LAError_LAErrorWatchNotAvailable,
+};
 
-use crate::ns_string::NSString;
+use crate::ns_error::NSError;
 
-#[derive(Debug)]
-pub struct LAError {
-    code: i64,
-    message: String,
-}
-
-impl Display for LAError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({})", self.message, self.code)
-    }
+#[derive(Debug, thiserror::Error)]
+pub enum LAError {
+    #[error("{0}")]
+    AuthenticationFailed(NSError),
+    #[error("{0}")]
+    UserCancel(NSError),
+    #[error("{0}")]
+    UserFallback(NSError),
+    #[error("{0}")]
+    SystemCancel(NSError),
+    #[error("{0}")]
+    PasscodeNotSet(NSError),
+    #[error("{0}")]
+    AppCancel(NSError),
+    #[error("{0}")]
+    InvalidContext(NSError),
+    #[error("{0}")]
+    BiometryNotAvailable(NSError),
+    #[error("{0}")]
+    BiometryNotEnrolled(NSError),
+    #[error("{0}")]
+    BiometryLockout(NSError),
+    #[error("{0}")]
+    NotInteractive(NSError),
+    #[error("{0}")]
+    WatchNotAvailable(NSError),
+    #[error("{0}")]
+    BiometryNotPaired(NSError),
+    #[error("{0}")]
+    BiometryDisconnected(NSError),
+    #[error("{0}")]
+    InvalidDimensions(NSError),
 }
 
 impl From<NSError> for LAError {
-    fn from(error: NSError) -> Self {
-        let code = unsafe { error.code() };
+    fn from(e: NSError) -> Self {
+        match e.code {
+            LAError_LAErrorAuthenticationFailed => LAError::AuthenticationFailed(e),
+            LAError_LAErrorUserCancel => LAError::UserCancel(e),
+            LAError_LAErrorUserFallback => LAError::UserFallback(e),
+            LAError_LAErrorSystemCancel => LAError::SystemCancel(e),
+            LAError_LAErrorPasscodeNotSet => LAError::PasscodeNotSet(e),
+            LAError_LAErrorAppCancel => LAError::AppCancel(e),
+            LAError_LAErrorInvalidContext => LAError::InvalidContext(e),
+            LAError_LAErrorBiometryNotAvailable => LAError::BiometryNotAvailable(e),
+            LAError_LAErrorBiometryNotEnrolled => LAError::BiometryNotEnrolled(e),
+            LAError_LAErrorBiometryLockout => LAError::BiometryLockout(e),
+            LAError_LAErrorNotInteractive => LAError::NotInteractive(e),
+            LAError_LAErrorWatchNotAvailable => LAError::WatchNotAvailable(e),
+            LAError_LAErrorBiometryNotPaired => LAError::BiometryNotPaired(e),
+            LAError_LAErrorBiometryDisconnected => LAError::BiometryDisconnected(e),
+            LAError_LAErrorInvalidDimensions => LAError::InvalidDimensions(e),
+            _ => panic!("Unknown LAError code: {}", e.code),
+        }
+    }
+}
 
-        let message = unsafe {
-            let description: NSString = error.localizedDescription().into();
-            description.into()
-        };
-
-        LAError { code, message }
+impl From<_sys::NSError> for LAError {
+    fn from(e: _sys::NSError) -> Self {
+        NSError::from(e).into()
     }
 }

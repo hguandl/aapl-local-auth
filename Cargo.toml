@@ -6,10 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-objc = "0.2.7"
 block = "0.1.6"
-_sys = { package = "aapl-local-auth-sys", path = "./aapl-local-auth-sys" }
+objc = "0.2.7"
+thiserror = "1.0"
 tokio = { version = "1", optional = true }
+_sys = { package = "aapl-local-auth-sys", path = "./aapl-local-auth-sys" }
 
 [features]
 default = ["async"]
