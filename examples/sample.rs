@@ -2,7 +2,7 @@ use aapl_local_auth::{LAContext, LAPolicy};
 use std::sync::mpsc::channel;
 
 fn main() {
-    let context = LAContext::new();
+    let context = LAContext::default();
 
     match context.can_evaluate_policy(LAPolicy::DeviceOwnerAuthentication) {
         Ok(true) => (),
