@@ -28,10 +28,11 @@ fn main() {
         .layout_tests(false)
         .block_extern_crate(true)
         .generate_block(true)
-        .whitelist_type("NS.+")
-        .whitelist_type("LA.+")
-        .blacklist_item("id")
-        .blacklist_item(".+Deprecated")
+        .blocklist_item("id")
+        .blocklist_item("timezone")
+        .blocklist_item("FndrOpaqueInfo")
+        .blocklist_item("HFS.*Catalog.*")
+        .blocklist_item(".+Deprecated")
         // The input header we would like to generate
         // bindings for.
         .header_contents(

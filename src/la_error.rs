@@ -1,6 +1,8 @@
 use std::fmt::Display;
 
-use crate::NSObject;
+use _sys::{INSError, NSError};
+
+use crate::ns_string::NSString;
 
 #[derive(Debug)]
 pub struct LAError {
@@ -14,16 +16,15 @@ impl Display for LAError {
     }
 }
 
-impl From<NSObject> for LAError {
-    fn from(ptr: NSObject) -> Self {
-        let message = unsafe {
-            let obj = _sys::NSError::localizedDescription(ptr) as NSObject;
-            let ptr = _sys::NSString_NSStringExtensionMethods::UTF8String(obj);
-            std::ffi::CStr::from_ptr(ptr).to_str().unwrap()
-        }
-        .to_string();
+impl From<NSError> for LAError {
+    fn from(error: NSError) -> Self {
+        let code = unsafe { error.code() };
 
-        let code = unsafe { _sys::NSError::code(ptr) as i64 };
+        let message = unsafe {
+            let description: NSString = error.localizedDescription().into();
+            description.into()
+        };
+
         LAError { code, message }
     }
 }

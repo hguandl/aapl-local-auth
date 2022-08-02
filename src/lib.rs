@@ -1,5 +1,3 @@
-type NSObject = _sys::id;
-
 mod la_context;
 mod la_error;
 mod ns_string;

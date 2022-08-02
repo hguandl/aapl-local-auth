@@ -9,8 +9,13 @@ edition = "2021"
 objc = "0.2.7"
 block = "0.1.6"
 _sys = { package = "aapl-local-auth-sys", path = "./aapl-local-auth-sys" }
-tokio = { version = "1", features = ["macros", "rt", "sync"], optional = true }
+tokio = { version = "1", optional = true }
 
 [features]
-async = ["tokio"]
 default = ["async"]
+async = ["tokio/sync"]
+async-full = ["tokio/full"]
+
+[[example]]
+name = "sample_async"
+required-features = ["async-full"]
