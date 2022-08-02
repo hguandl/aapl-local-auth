@@ -1,4 +1,10 @@
+use std::cell::Cell;
+use std::future::Future;
 use std::mem::MaybeUninit;
+use std::pin::Pin;
+use std::rc::Rc;
+use std::sync::Mutex;
+use std::task::{Context, Poll, Waker};
 
 use block::ConcreteBlock;
 use objc::{class, msg_send, sel, sel_impl};
@@ -48,7 +54,21 @@ impl LAContext {
         policy: LAPolicy,
         localized_reason: &str,
     ) -> Result<bool, LAError> {
-        todo!();
+        let fut = EvaluateFuture::new();
+        let inner = fut.inner.clone();
+        self.evaluate_policy(policy, localized_reason, move |result| {
+            let guard = inner.result.lock().unwrap();
+            guard.set(Some(result));
+            loop {
+                if let Some(waker) = inner.waker.take() {
+                    waker.wake();
+                    break;
+                }
+                // the callback usually needs some time to be call (user need time to respond),
+                // during that period the waker should already set.
+            }
+        });
+        fut.await
     }
 
     pub fn evaluate_policy<F>(&self, policy: LAPolicy, localized_reason: &str, reply: F)
@@ -95,6 +115,38 @@ impl LAContext {
         let title = NSString::from(title);
         unsafe {
             _sys::LAContext::setLocalizedFallbackTitle_(self.ptr, title.into());
+        }
+    }
+}
+
+struct EvaluateFuture {
+    inner: Rc<EvaluateFutureInner>,
+}
+
+#[derive(Default)]
+struct EvaluateFutureInner {
+    result: Mutex<Cell<Option<Result<bool, LAError>>>>,
+    waker: Cell<Option<Waker>>,
+}
+
+impl EvaluateFuture {
+    fn new() -> EvaluateFuture {
+        EvaluateFuture {
+            inner: Rc::new(EvaluateFutureInner::default()),
+        }
+    }
+}
+
+impl Future for EvaluateFuture {
+    type Output = Result<bool, LAError>;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let guard = self.inner.result.lock().unwrap();
+        self.inner.waker.set(Some(cx.waker().clone()));
+        if let Some(result) = guard.take() {
+            Poll::Ready(result)
+        } else {
+            Poll::Pending
         }
     }
 }
